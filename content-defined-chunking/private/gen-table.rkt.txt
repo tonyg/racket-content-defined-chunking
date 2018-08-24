@@ -1,0 +1,24 @@
+#lang racket ;; -*- racket -*-
+;; Compatible with https://github.com/ronomon/deduplication/blob/master/table.js
+;;
+;; Depends on the `crypto` package, which is why this isn't a `*.rkt`
+;; file, so that we don't have a spurious package dependency at build
+;; or run time.
+
+(require crypto)
+(require crypto/libcrypto)
+
+(crypto-factories (list libcrypto-factory))
+
+(define raw-table
+  (encrypt '(aes ctr)
+           (make-bytes 32)
+           (make-bytes 16)
+           (make-bytes 1024)))
+
+(define table
+  (for/vector [(pos (in-range 0 1024 4))]
+    (bitwise-and (integer-bytes->integer raw-table #f #t pos (+ pos 4)) #x7fffffff)))
+
+(write table)
+(newline)
