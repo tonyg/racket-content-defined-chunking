@@ -107,7 +107,7 @@
                                   (printf "~a,~a\n" old-pos (- new-pos old-pos))
                                   (set! old-pos new-pos))
                                 (quotient average-size 4)
-                                65536
+                                average-size
                                 (* average-size 8)))
                    '())))
       (fprintf (current-error-port)
