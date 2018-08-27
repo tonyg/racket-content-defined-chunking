@@ -97,8 +97,24 @@
               (inner n)]))])))
 
 (module+ main
+  (require racket/cmdline)
+  (define average-size 65536)
+  (define lower-limit-ratio 1/4)
+  (define upper-limit-ratio 8)
+  (command-line #:program "ronomon"
+                #:once-each
+                [("--average-size" "-s") n
+                 ((format "Set average chunk size (default: ~a bytes)" average-size))
+                 (set! average-size (string->number n))]
+                [("--lower-limit-ratio" "-l") r
+                 ((format "Smallest chunk will be <this> * average-size (default: ~a)"
+                          lower-limit-ratio))
+                 (set! lower-limit-ratio (string->number r))]
+                [("--upper-limit-ratio" "-u") r
+                 ((format "Largest chunk will be <this> * average-size (default: ~a)"
+                          upper-limit-ratio))
+                 (set! upper-limit-ratio (string->number r))])
   (let ((old-pos 0))
-    (define average-size 65536)
     (let-values (((_result cpu-ms wall-ms gc-ms)
                   (time-apply
                    (lambda ()
@@ -106,14 +122,14 @@
                                 (lambda (new-pos)
                                   (printf "~a,~a\n" old-pos (- new-pos old-pos))
                                   (set! old-pos new-pos))
-                                (quotient average-size 4)
+                                (* lower-limit-ratio average-size)
                                 average-size
-                                (* average-size 8)))
+                                (* upper-limit-ratio average-size)))
                    '())))
       (fprintf (current-error-port)
                "Processed ~a bytes in ~a ms (~a ms without gc) -> ~a MB/s (~a MB/s)"
                old-pos
                cpu-ms
                (- cpu-ms gc-ms)
-               (/ old-pos 1048576.0 (/ cpu-ms 1000.0))
-               (/ old-pos 1048576.0 (/ (- cpu-ms gc-ms) 1000.0))))))
+               (if (zero? cpu-ms) +inf.0 (/ old-pos 1048576.0 (/ cpu-ms 1000.0)))
+               (if (zero? cpu-ms) +inf.0 (/ old-pos 1048576.0 (/ (- cpu-ms gc-ms) 1000.0)))))))
