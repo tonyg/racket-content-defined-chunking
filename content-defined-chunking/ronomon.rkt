@@ -53,7 +53,7 @@
 
 (define (ceil-div a b)
   (define q (quotient a b))
-  (if (zero? (modulo a b)) (+ q 1) q))
+  (if (zero? (modulo a b)) q (+ q 1)))
 
 (define (center-size lower-limit average-size upper-limit)
   (min upper-limit (- average-size (min (+ lower-limit (ceil-div lower-limit 2)) average-size))))
